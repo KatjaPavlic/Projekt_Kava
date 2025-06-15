@@ -1,0 +1,111 @@
+---
+title: "Projekt: Analiza podatkov o kavi"
+author: "Katja Pavlič"
+format:
+  html:
+    toc: true
+    number-sections: true
+    code-fold: true
+    code-tools: true
+    self-contained: true
+editor: visual
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+
+library(tidyverse)
+library(janitor)
+library(DT)
+```
+
+# Uvod
+
+V tem projektu analiziramo podatke o kavi z različnih koncev sveta. Cilj je ugotoviti, kateri dejavniki (npr. država porekla, nadmorska višina, metoda predelave) vplivajo na senzorično kakovost kave. Podatki so pridobljeni iz javno dostopnega vira (glej Literatura).
+
+# Predstavitev podatkov
+
+```{r}
+
+coffee <- read_csv("ProjectData/merged_data_cleaned.csv")
+head(coffee)
+glimpse(coffee)
+```
+
+Opis pomembnejših stolpcev: - `Country.of.Origin`: država porekla (npr. Ethiopia, Colombia) - `Variety`: sorta kave (npr. Bourbon, Typica) - `Processing.Method`: način obdelave (npr. Washed, Natural) - `Total.Cup.Points`: skupna senzorična ocena kave (0–100) - `altitude_mean_meters`: povprečna nadmorska višina v metrih
+
+# Preoblikovanje podatkov
+
+```{r}
+# Odstranim manjkajoče vrednosti za oceno
+coffee_clean <- coffee %>%
+  filter(!is.na(Total.Cup.Points))
+
+# Primer agregacije: povprečna ocena po državi
+avg_score_by_country <- coffee_clean %>%
+  group_by(Country.of.Origin) %>%
+  summarise(average_score = mean(Total.Cup.Points, na.rm = TRUE)) %>%
+  arrange(desc(average_score))
+
+# Prikaz tabele
+datatable(avg_score_by_country)
+```
+
+*V tej tabeli prikazujemo povprečno oceno kave po posameznih državah. Najvišjo kakovost imajo kave iz ...*
+
+```{r}
+# Še dve dodatni obdelavi (primer join ali razvrščanja)
+
+# Dodaj povprečno višino po državi
+avg_altitude_by_country <- coffee_clean %>%
+  group_by(Country.of.Origin) %>%
+  summarise(avg_altitude = mean(altitude_mean_meters, na.rm = TRUE))
+
+# Join
+joined_data <- left_join(avg_score_by_country, avg_altitude_by_country, by = "Country.of.Origin")
+
+datatable(joined_data)
+```
+
+# Exploratory Data Analysis (EDA)
+
+```{r}
+# 1. Histogram skupnih ocen
+ggplot(coffee_clean, aes(x = Total.Cup.Points)) +
+  geom_histogram(binwidth = 1, fill = "steelblue") +
+  labs(title = "Porazdelitev skupnih ocen", x = "Total Cup Points", y = "Število vzorcev")
+```
+
+*Histogram prikazuje porazdelitev ocen. Večina vzorcev ima oceno med 80 in 90 točkami, kar pomeni, da gre večinoma za specializirano kavo.*
+
+```{r}
+# 2. Povprečna ocena po državi
+ggplot(avg_score_by_country, aes(x = reorder(`Country.of.Origin`, average_score), y = average_score)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Povprečna ocena po državi", x = "Država", y = "Povprečna ocena")
+```
+
+*Barvni stolpci prikazujejo, katere države imajo v povprečju višje ocene.*
+
+```{r}
+# 3. Odnos med višino in oceno
+ggplot(joined_data, aes(x = avg_altitude, y = average_score)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Povezava med višino in oceno", x = "Povprečna nadmorska višina (m)", y = "Povprečna ocena")
+```
+
+*Zdi se, da obstaja pozitivna povezava med nadmorsko višino in kakovostjo kave.*
+
+# Interpretacija in zaključek
+
+Na podlagi analize lahko sklepamo, da imajo kave iz določenih držav (npr. Ethiopia, Kenya) višje senzorične ocene. Nadmorska višina in metoda obdelave lahko vplivata na končno kakovost. V prihodnje bi bilo smiselno vključiti tudi cene, trg in porabo, če bi bili ti podatki na voljo.
+
+# Literatura / Reference
+
+-   Podatki: [Coffee Quality Data](https://github.com/jldbc/coffee-quality-database)
+-   Opisi metod: Wikipedia, "Coffee Processing"
+-   R orodja: tidyverse, janitor, DT

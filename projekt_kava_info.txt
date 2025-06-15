@@ -1,0 +1,11 @@
+Naslov projekta: Analiza podatkov o kavi
+Avtorica: Katja Pavlič
+URL: https://primer-projekta.netlify.app  # <-- Tukaj vpiši pravi URL po objavi na Netlify
+
+Opis:
+Ta projekt analizira senzorične lastnosti kav z uporabo javnega nabora podatkov. Prikazuje uvoz podatkov, obdelavo z tidyverse metodami in vizualizacijo z ggplot2.
+
+Oddane datoteke:
+- projekt_kava.qmd
+- projekt_kava.html (renderiran, samostojen HTML)
+- navodila_netlify.pdf (priložena)
